@@ -1,0 +1,8 @@
+https://openai.com/blog/rss.xml
+https://ai.googleblog.com/atom.xml
+https://www.deepmind.com/blog/rss.xml
+https://www.anthropic.com/news.xml
+https://www.mittechreview.com/feed/tag/artificial-intelligence/
+https://venturebeat.com/category/ai/feed/
+https://techcrunch.com/category/artificial-intelligence/feed/
+https://www.theverge.com/artificial-intelligence/rss/index.xml
