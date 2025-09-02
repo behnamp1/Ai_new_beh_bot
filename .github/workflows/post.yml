@@ -2,8 +2,8 @@ name: Post AI News
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # هر 30 دقیقه اجرا می‌شود
-  workflow_dispatch:          # اجرای دستی از تب Actions
+    - cron: "*/30 * * * *"   # هر 30 دقیقه
+  workflow_dispatch:          # اجرای دستی
 
 permissions:
   contents: write
@@ -37,30 +37,18 @@ jobs:
           test -n "${{ secrets.CHANNEL_USERNAME }}" && echo "CHANNEL_USERNAME=OK" || (echo "CHANNEL_USERNAME=MISSING" && exit 1)
           test -n "${{ secrets.HF_TOKEN }}" && echo "HF_TOKEN=OK" || (echo "HF_TOKEN=MISSING (will skip HF)" )
 
-      - name: Telegram ping (sanity check)
+      # —— مرحلهٔ تشخیصی مفصل تلگرام ——
+      - name: Telegram diagnostics
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHANNEL_USERNAME: ${{ secrets.CHANNEL_USERNAME }}
         run: |
-          echo "Ping Telegram…"
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
-               -d chat_id="${CHANNEL_USERNAME}" \
-               -d text="✅ اتصال برقرار است. (Ping از GitHub Actions)"
-          echo ""
+          set -e
+          echo "== getMe =="
+          curl -s "https://api.telegram.org/bot${TELEGRAM_TOKEN}/getMe"; echo; echo
 
-      - name: Run bot
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          CHANNEL_USERNAME: ${{ secrets.CHANNEL_USERNAME }}
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python bot.py
+          echo "== getChat (using CHANNEL_USERNAME as chat_id) =="
+          curl -s "https://api.telegram.org/bot${TELEGRAM_TOKEN}/getChat" \
+               -d chat_id="${CHANNEL_USERNAME}"; echo; echo
 
-      - name: Commit posted.json if changed
-        run: |
-          if [[ -n "$(git status --porcelain)" ]]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add posted.json
-            git commit -m "Update posted.json [skip ci]"
-            git push
-          fi
+          BOT_ID=$(cu_
