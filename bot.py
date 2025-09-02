@@ -173,65 +173,30 @@ def craft_caption_fa(title_fa, bullets_fa, takeaway_fa, link):
 def main():
     assert TELEGRAM_TOKEN, "TELEGRAM_TOKEN is missing"
     feeds = load_feeds()
-    posted = load_posted()
-    new_any = False
 
-    for feed_url in feeds:
-        d = feedparser.parse(feed_url)
-        for entry in d.entries[:6]:
-            uid = entry.get("id") or entry.get("link") or hashlib.md5(str(entry).encode()).hexdigest()
-            if uid in posted:
-                continue
+    # فقط اولین فید و اولین آیتم رو می‌گیره
+    if not feeds:
+        print("No feeds found in feeds.txt")
+        return
 
-            title = entry.get("title","(Untitled)")
-            link = entry.get("link","")
-            rss_sum = strip_html(entry.get("summary",""))
-            img = pick_image(entry)
+    feed_url = feeds[0]
+    d = feedparser.parse(feed_url)
 
-            text_for_sum = rss_sum
-            if len(text_for_sum) < 300 and link:
-                page_txt = fetch_page_text(link)
-                if len(page_txt) > 400:
-                    text_for_sum = page_txt
+    if not d.entries:
+        print("No entries in feed")
+        return
 
-            # زبان
-            lang_code = "en"
-            try:
-                lang_code = detect((text_for_sum or title)[:4000])
-            except:
-                pass
+    # اولین آیتم
+    entry = d.entries[0]
+    title = entry.get("title", "(Untitled)")
+    link = entry.get("link", "")
+    summary = strip_html(entry.get("summary", ""))
 
-            # خلاصه‌سازی/ترجمه
-            if lang_code == "fa":
-                summary_fa = hf_summarize_multilingual(text_for_sum or title, target_lang="fa", max_len=160) or \
-                             (rss_sum[:360] + ("…" if len(rss_sum)>360 else ""))
-                title_fa = title if detect(title) == "fa" else (hf_translate_en_to_fa(title) or title)
-            else:
-                summary_en = hf_summarize_multilingual(text_for_sum or title, target_lang="en", max_len=160) or \
-                             text_for_sum[:360] + ("…" if len(text_for_sum)>360 else "")
-                summary_fa = hf_translate_en_to_fa(summary_en) or summary_en
-                title_fa = hf_translate_en_to_fa(title) or title
+    # متن فارسی ساده بساز (بدون خلاصه‌سازی)
+    caption = f"🧪 تست ارسال پیام:\n\n{title}\n\n{summary[:200]}...\n\nلینک: {link}"
 
-            # بازنویسی قالبی
-            title_fa, bullets_fa, takeaway_fa = rewrite_persian(title_fa, summary_fa)
-
-            caption = craft_caption_fa(title_fa, bullets_fa, takeaway_fa, link) if link else f"{BRAND_EMOJI} {title_fa}\n\n{bullets_fa}"
-            try:
-                if img:
-                    send_telegram_photo(TELEGRAM_TOKEN, CHANNEL_USERNAME, img, caption)
-                else:
-                    send_telegram_text(TELEGRAM_TOKEN, CHANNEL_USERNAME, caption, disable_preview=False)
-                posted.add(uid)
-                new_any = True
-                time.sleep(1.0)
-            except Exception as e:
-                print("Error posting:", e)
-
-    if new_any:
-        save_posted(posted)
-        print("Posted new items.")
-    else:
-        print("No new items to post.")
-
-if __name__ == "__main__":
-    main()
+    try:
+        send_telegram_text(TELEGRAM_TOKEN, CHANNEL_USERNAME, caption, disable_preview=False)
+        print("Test message sent to Telegram!")
+    except Exception as e:
+        print("Error posting:", e)
