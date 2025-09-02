@@ -1,1 +1,8 @@
-https://www.technologyreview.com/ai/feed/
+http://feeds.bbci.co.uk/news/world/rss.xml
+http://rss.cnn.com/rss/cnn_topstories.rss
+https://www.theverge.com/rss/index.xml
+https://techcrunch.com/feed/
+https://www.wired.com/feed/
+https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml
+https://www.huffpost.com/section/front-page/feed
+http://feeds.reuters.com/reuters/topNews
