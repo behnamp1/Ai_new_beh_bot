@@ -56,3 +56,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+# قبل از ارسال پیام:
+print(f"Found {len(d.entries)} entries in feed.")
