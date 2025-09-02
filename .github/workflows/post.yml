@@ -2,11 +2,11 @@ name: Post AI News
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # هر 30 دقیقه (بر مبنای UTC)
+    - cron: "*/30 * * * *"   # هر 30 دقیقه اجرا می‌شود
   workflow_dispatch:          # اجرای دستی از تب Actions
 
 permissions:
-  contents: write             # برای commit کردن posted.json
+  contents: write
 
 concurrency:
   group: post-ai-news
@@ -30,16 +30,29 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
- 
-      - name: Check secrets presence (no value shown)
+
+      - name: Check secrets presence
         run: |
           test -n "${{ secrets.TELEGRAM_TOKEN }}" && echo "TELEGRAM_TOKEN=OK" || (echo "TELEGRAM_TOKEN=MISSING" && exit 1)
           test -n "${{ secrets.CHANNEL_USERNAME }}" && echo "CHANNEL_USERNAME=OK" || (echo "CHANNEL_USERNAME=MISSING" && exit 1)
+          test -n "${{ secrets.HF_TOKEN }}" && echo "HF_TOKEN=OK" || (echo "HF_TOKEN=MISSING (will skip HF)" )
+
+      - name: Telegram ping (sanity check)
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHANNEL_USERNAME: ${{ secrets.CHANNEL_USERNAME }}
+        run: |
+          echo "Ping Telegram…"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+               -d chat_id="${CHANNEL_USERNAME}" \
+               -d text="✅ اتصال برقرار است. (Ping از GitHub Actions)"
+          echo ""
 
       - name: Run bot
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHANNEL_USERNAME: ${{ secrets.CHANNEL_USERNAME }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: python bot.py
 
       - name: Commit posted.json if changed
